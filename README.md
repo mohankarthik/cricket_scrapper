@@ -9,6 +9,7 @@
 - Activate the venv
   - Windows: `./venv/bin/activate`
   - \*nix: `. ./venv/bin/activate`
+- Update pip if needed `pip3 install --upgrade pip`
 - Install dependencies `pip3 install -r requirements.txt`
 
 ### MongoDB

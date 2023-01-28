@@ -9,7 +9,7 @@ class CricDataStore:
         self.myclient = pymongo.MongoClient(os.environ.get("MONGO_URI"))
         self.mydb = self.myclient[os.environ.get("MONGO_DB")]
         self.colBcci = self.mydb[os.environ.get("MONGO_COL")]
-        
+
     def clear(self) -> None:
         self.colBcci.drop()
 
@@ -28,6 +28,7 @@ class CricDataStore:
 
 def test() -> None:
     from dotenv import load_dotenv
+
     load_dotenv()
     dataStore = CricDataStore()
     f = open("test.json", "r")

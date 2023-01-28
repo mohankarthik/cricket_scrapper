@@ -1,5 +1,4 @@
 import logging
-import multiprocessing
 from typing import List
 import requests
 import json
@@ -9,7 +8,7 @@ BCCI_DOMESTIC_COMPEITION_URL = f"{BCCI_BASE_URL}/feeds/competition.js"
 BCCI_INTERNATIONAL_COMPETITION_URL = f"{BCCI_BASE_URL}/matchcentre/mc/competition.js"
 
 
-class BcciScrape:
+class BcciScraper:
     @staticmethod
     def _cleanCompetitionResponse(response: str) -> List[dict]:
         return json.loads(response[13:-2])["competition"]
@@ -32,24 +31,28 @@ class BcciScrape:
 
     def getCompetitions(this):
         logging.info(f"Getting list of all competitions")
-        domestic = BcciScrape._cleanCompetitionResponse(
+        domestic = BcciScraper._cleanCompetitionResponse(
             requests.get(BCCI_DOMESTIC_COMPEITION_URL).text
         )
-        international = BcciScrape._cleanCompetitionResponse(
+        international = BcciScraper._cleanCompetitionResponse(
             requests.get(BCCI_INTERNATIONAL_COMPETITION_URL).text
         )
         for competition in domestic:
             competition["type"] = "domestic"
         for competition in international:
             competition["type"] = "international"
-            
-        logging.debug(f"Got a total of {len(domestic)} domenstic competitions and {len(international)} international competitions")
+
+        logging.debug(
+            f"Got a total of {len(domestic)} domenstic competitions and {len(international)} international competitions"
+        )
         return domestic + international
 
     def getMatchSummaryForCompetition(
         this, competition: dict, ignore_list: List[str] = []
     ) -> List[dict]:
-        logging.info(f"Getting match details for competition: {competition['CompetitionName']}")
+        logging.info(
+            f"Getting match details for competition: {competition['CompetitionName']}"
+        )
         competitionId = competition["CompetitionID"]
         competitionType = competition["type"]
 
@@ -61,10 +64,12 @@ class BcciScrape:
             BCCI_SCHEDULE_URL = f"{BCCI_BASE_URL}/feeds-international/scoringfeeds/{competitionId}-matchschedule.js"
 
         try:
-            matches = BcciScrape._cleanScheduleResponse(
+            matches = BcciScraper._cleanScheduleResponse(
                 requests.get(BCCI_SCHEDULE_URL).text
             )
-            logging.debug(f"Got a total of {len(matches)} matches for {competition['CompetitionName']}")
+            logging.debug(
+                f"Got a total of {len(matches)} matches for {competition['CompetitionName']}"
+            )
             matches = [
                 match
                 for match in matches
@@ -73,11 +78,13 @@ class BcciScrape:
                     and match["MatchID"] not in ignore_list
                 )
             ]
-            logging.debug(f"After filtering ignore list and not compelted, we've {len(matches)} matches for {competition['CompetitionName']}")
+            logging.debug(
+                f"After filtering ignore list and not compelted, we've {len(matches)} matches for {competition['CompetitionName']}"
+            )
 
             for match in matches:
                 match["type"] = competitionType
-                match = BcciScrape.augmentMatchDetails(match)
+                match = BcciScraper.augmentMatchDetails(match)
 
             return matches
 
@@ -103,19 +110,19 @@ class BcciScrape:
                 f"{BCCI_BASE_URL}/feeds-international/scoringfeeds/{matchId}"
             )
 
-        matchSummary = BcciScrape._cleanSummaryResponse(
+        matchSummary = BcciScraper._cleanSummaryResponse(
             requests.get(BCCI_SUMMARY_URL).text
         )
         match.update(matchSummary)
 
-        squadDetails = BcciScrape._cleanSquad(requests.get(BCCI_SQUAD_URL).text)
+        squadDetails = BcciScraper._cleanSquad(requests.get(BCCI_SQUAD_URL).text)
         match["squad"] = squadDetails
 
         # If the match wasn't abandoned, then get the innings details
         if match["CurrentInnings"] != "":
             currentInnings = int(match["CurrentInnings"])
             for innings in range(1, currentInnings + 1):
-                inningsDetails = BcciScrape._cleanInnings(
+                inningsDetails = BcciScraper._cleanInnings(
                     requests.get(f"{BCCI_INNINGS_URL}{innings}.js").text
                 )
                 match.update(inningsDetails)
@@ -124,7 +131,7 @@ class BcciScrape:
 
 
 def test() -> None:
-    scrapper = BcciScrape()
+    scrapper = BcciScraper()
     competitions = scrapper.getCompetitions()
     matches = []
     for competition in competitions[0:1]:
