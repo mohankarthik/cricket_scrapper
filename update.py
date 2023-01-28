@@ -13,7 +13,6 @@ def main() -> None:
 
     scrapper = BcciScraper()
     dataStore = CricDataStore()
-    dataStore.clear()
 
     competitions = scrapper.getCompetitions()
     for competition in competitions:
